@@ -76,7 +76,7 @@ provider = "gmail"
 username = "your-hr-bot@gmail.com"
 password = "xxxx xxxx xxxx xxxx"   # Gmail App Password (16 символів)
 from_addr = "your-hr-bot@gmail.com"
-hr_to = "hr@smart-solutions.ua"
+hr_to = "hr@smart-solutions.ua, hr2@smart-solutions.ua" # Одне або декілька адреси через кому
 use_mock = false                   # true — для розробки без відправки реальних листів
 ```
 

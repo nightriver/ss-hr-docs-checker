@@ -210,6 +210,7 @@ def build_email_message(
 def create_mailer_from_secrets(secrets: dict) -> tuple[DocsMailer, str]:
     """
     Creates DocsMailer instance and recipient HR email address from Streamlit secrets dictionary.
+    Supports single email string, comma-separated string of multiple emails, or a list of emails.
 
     Expected secrets.toml structure:
         [smtp]
@@ -217,13 +218,18 @@ def create_mailer_from_secrets(secrets: dict) -> tuple[DocsMailer, str]:
         username = "hr-bot@gmail.com"
         password = "xxxx xxxx xxxx xxxx"
         from_addr = "hr-bot@gmail.com"
-        hr_to = "hr@smart-solutions.ua"
+        hr_to = "hr@smart-solutions.ua, hr2@smart-solutions.ua"
         use_mock = false
     """
     smtp_sec = secrets.get("smtp", {})
     use_mock = smtp_sec.get("use_mock", False)
     from_addr = smtp_sec.get("from_addr", "noreply@smart-solutions.ua")
-    hr_to = smtp_sec.get("hr_to", "")
+    raw_hr_to = smtp_sec.get("hr_to", "")
+
+    if isinstance(raw_hr_to, (list, tuple)):
+        hr_to = ", ".join(str(addr).strip() for addr in raw_hr_to if addr)
+    else:
+        hr_to = str(raw_hr_to).strip()
 
     if use_mock:
         provider: MailProvider = MockMailProvider(should_succeed=True)
