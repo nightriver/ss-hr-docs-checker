@@ -1,55 +1,108 @@
-# HR-опитувальник документів — Smart Solutions
+# HR Docs Checker & Collector — Smart Solutions
 
-Інтерактивний застосунок для формування персонального переліку документів при прийомі на роботу.
+**HR Docs Checker & Collector** — сучасний веб-сервіс на Streamlit для автоматизації роботи HR-фахівців при наймі нових співробітників. Додаток дозволяє кандидату пройти персоналізоване опитування, сформувати точний перелік необхідних документів, завантажити їх безпосередньо у форму, пройти автоматичну перевірку та стиснення файлів, і надіслати повний пакет документів на електронну пошту HR-відділу.
 
-## Запуск локально
+---
+
+## 🌟 Основні можливості
+
+- **8-кроковий опитувальник (Wizard)**: динамічне формування переліку з 13+ типів документів залежно від відповідей кандидата (військовозобов'язаний, трудова книжка, освіта/студент денної форми, діти, інвалідність, ВПО, ЧАЕС тощо).
+- **Пряме завантаження документів**: файлові віджети вбудовані безпосередньо в картки кожного документа.
+- **Розумна валідація Резерв+/Оберіг**: перевірка наявності текстового шару у витягах Резерв+ (PDF з додатку), виявлення сканів/фото, аналіз 5 ключових маркерів.
+- **Автоматичне стискання зображень**: підгонка під макс. роздільну здатність ~2000px та ітеративне зниження якості JPEG у пам'яті (Pillow + EXIF auto-orientation).
+- **Стандартизоване іменування вкладень**: транслітерація ПІБ та автоматична нумерація сторінок/файлів (`Ivanenko_Petro_IPN.pdf`, `Ivanenko_Petro_Pasport_p1.jpg`).
+- **Атомарний Chunking електронної пошти**: автоматичне розбиття великого пакета документів на декілька листів (до 18 MB raw на лист). Документи одного типу (`doc_id`) ніколи не розриваються між листами.
+- **Безпека та приватність**:
+  - Файли обробляються виключно в пам'яті (`st.session_state`) та не зберігаються на сервері.
+  - Кандидату не надсилаються лист-копії (захист внутрішніх приміток HR).
+  - Ведуться знеособлені логи помилок без PII (без ПІБ, email чи вмісту файлів).
+- **Інтерактивний UI**: сповіщення `st.toast`, покроковий статус відправки `st.status`, кнопки скачування текстового/PDF-переліку.
+
+---
+
+## 🛠️ Технологічний стек
+
+- **Мова**: Python 3.10+
+- **Фреймворк**: Streamlit >= 1.35.0
+- **Обробка зображень**: Pillow >= 10.3.0
+- **Аналіз PDF**: pypdf >= 4.2.0, fpdf2 >= 2.7.9
+- **Тестування**: pytest >= 9.1.1 (80/80 unit & integration тестів)
+
+---
+
+## 📂 Структура проєкту
+
+```text
+ss-hr-docs-checker/
+├── app.py                 # Покроковий майстер (8 кроків), UI з st.toast та st.status
+├── documents.py           # Схема побудови переліку документів (build_documents)
+├── uploads.py             # Оформлення карток документів, завантаження, session_state
+├── chunking.py            # Групування по doc_id, bin-packing, нумерація частин (≤18 MB)
+├── emailer.py             # EmailMessage, SendResult, Gmail SMTP & Mock providers
+├── image_tools.py         # Стиснення зображень (Pillow EXIF, downscaling, quality)
+├── validators.py           # MIME-перевірка magic bytes, аналіз текстового шару Резерв+
+├── file_naming.py         # Генерація назв вкладень з транслітерацією ПІБ
+├── text_utils.py          # Транслітерація кирилиці в ASCII та санітизація рядків
+├── instructions.py        # Інструкції з отримання електронних документів (ЕТК тощо)
+├── exporters.py           # Генерація резервних TXT та PDF переліків (fpdf2)
+├── styles.py              # CSS-стилі карток, бренд Smart Solutions
+├── .streamlit/
+│   ├── config.toml        # Конфігурація (maxUploadSize = 15 MB)
+│   └── secrets.toml        # Конфігурація SMTP / Gmail App Password (в git не додається)
+├── tests/                 # Тест-сюїта (80 тестів)
+├── requirements.txt       # Залежності проєкту
+└── README.md              # Документація
+```
+
+---
+
+## 🚀 Локальний запуск
+
+### 1. Клонування репозиторію та встановлення залежностей
 
 ```bash
+git clone https://github.com/nightriver/ss-hr-docs-checker.git
+cd ss-hr-docs-checker
 pip install -r requirements.txt
+```
+
+### 2. Налаштування пошти (`.streamlit/secrets.toml`)
+
+Створіть файл `.streamlit/secrets.toml` у корені проєкту:
+
+```toml
+[smtp]
+provider = "gmail"
+username = "your-hr-bot@gmail.com"
+password = "xxxx xxxx xxxx xxxx"   # Gmail App Password (16 символів)
+from_addr = "your-hr-bot@gmail.com"
+hr_to = "hr@smart-solutions.ua"
+use_mock = false                   # true — для розробки без відправки реальних листів
+```
+
+### 3. Запуск веб-застосунку
+
+```bash
 streamlit run app.py
 ```
 
-## Структура проєкту
+Застосунок буде доступний за адресою: `http://localhost:8501`
 
-```
-ss-hr-docs-checker/
-├── app.py              # Головний файл, кроки, навігація, рендер
-├── documents.py        # build_documents(answers) → list[dict]
-├── instructions.py     # Інструкції (ЕТК тощо)
-├── exporters.py        # build_txt(), build_pdf()
-├── styles.py           # CSS карток та бренд Smart Solutions
-├── assets/
-│   └── fonts/
-│       ├── DejaVuSans.ttf          # Шрифт для PDF з кирилицею
-│       └── DejaVuSans-Bold.ttf     # Жирний шрифт для PDF
-├── requirements.txt
-└── README.md
-```
+---
 
-## Деплой на Streamlit Community Cloud
+## 🧪 Автоматичне тестування
 
-1. Завантажте шрифти DejaVuSans.ttf та DejaVuSans-Bold.ttf до `assets/fonts/`
-2. Створіть публічний репозиторій на GitHub з назвою `ss-hr-docs-checker`
-3. Підключіть репозиторій на https://share.streamlit.io, вкажіть `app.py`
-4. Отримайте публічное посилання виду `https://ss-hr-docs-checker.streamlit.app`
-
-> ⚠️ Шрифти DejaVu **обов'язково** мають бути у репозиторії — Streamlit Cloud не надає системних шрифтів з кирилицею.
-
-## Отримання шрифтів DejaVu
+Для запуску всіх 80 автоматичних тестів виконай:
 
 ```bash
-# Linux / macOS
-sudo apt-get install fonts-dejavu-core
-# Файли: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
-#         /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
-
-# Або завантажити з https://dejavu-fonts.github.io/
+python -m pytest
 ```
 
-## Технології
+---
 
-- Python 3.10+
-- Streamlit >= 1.35.0
-- fpdf2 >= 2.7.9
+## ☁️ Деплой на Streamlit Community Cloud
 
-
+1. Завантажте проєкт у свій GitHub-репозиторій.
+2. Перейдіть на [share.streamlit.io](https://share.streamlit.io) та підключіть репозиторій.
+3. У налаштуваннях **App Secrets** додайте конфігурацію `[smtp]` з файлу `secrets.toml`.
+4. Натисніть **Deploy**.

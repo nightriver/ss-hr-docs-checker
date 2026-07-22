@@ -1,0 +1,9 @@
+.streamlit/secrets.toml
+plan_hr-docs-checker_v2_1.md
+plan_hr-docs-checker_*.md
+implementation_plan.md
+__pycache__/
+*.pyc
+.DS_Store
+.agents/
+.pytest_cache/
