@@ -12,7 +12,7 @@ streamlit run app.py
 ## Структура проєкту
 
 ```
-hr-docs-checker/
+ss-hr-docs-checker/
 ├── app.py              # Головний файл, кроки, навігація, рендер
 ├── documents.py        # build_documents(answers) → list[dict]
 ├── instructions.py     # Інструкції (ЕТК тощо)
@@ -29,9 +29,9 @@ hr-docs-checker/
 ## Деплой на Streamlit Community Cloud
 
 1. Завантажте шрифти DejaVuSans.ttf та DejaVuSans-Bold.ttf до `assets/fonts/`
-2. Створіть публічний репозиторій на GitHub з назвою `hr-docs-checker`
+2. Створіть публічний репозиторій на GitHub з назвою `ss-hr-docs-checker`
 3. Підключіть репозиторій на https://share.streamlit.io, вкажіть `app.py`
-4. Отримайте публічне посилання виду `https://hr-docs-checker.streamlit.app`
+4. Отримайте публічное посилання виду `https://ss-hr-docs-checker.streamlit.app`
 
 > ⚠️ Шрифти DejaVu **обов'язково** мають бути у репозиторії — Streamlit Cloud не надає системних шрифтів з кирилицею.
 
