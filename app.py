@@ -85,11 +85,19 @@ def reset_app():
 
 
 # ─── Логотип ──────────────────────────────────────────────────
-_logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.svg")
+_logo_png = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+_logo_svg = os.path.join(os.path.dirname(__file__), "assets", "logo.svg")
 try:
-    with open(_logo_path, "rb") as _f:
-        _logo_b64 = base64.b64encode(_f.read()).decode("utf-8")
-    _logo_html = f'<img src="data:image/svg+xml;base64,{_logo_b64}" style="height:48px;">'
+    if os.path.exists(_logo_png):
+        with open(_logo_png, "rb") as _f:
+            _logo_b64 = base64.b64encode(_f.read()).decode("utf-8")
+        _logo_html = f'<img src="data:image/png;base64,{_logo_b64}" style="height:48px;object-fit:contain;">'
+    elif os.path.exists(_logo_svg):
+        with open(_logo_svg, "rb") as _f:
+            _logo_b64 = base64.b64encode(_f.read()).decode("utf-8")
+        _logo_html = f'<img src="data:image/svg+xml;base64,{_logo_b64}" style="height:48px;object-fit:contain;">'
+    else:
+        _logo_html = '<span style="font-weight:800;font-size:22px;color:#1A1A1A;">Smart<span style="color:#E8312A;">Solutions</span></span>'
 except Exception:
     _logo_html = '<span style="font-weight:800;font-size:22px;color:#1A1A1A;">Smart<span style="color:#E8312A;">Solutions</span></span>'
 
