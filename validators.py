@@ -79,7 +79,7 @@ def validate_mime_type(
         detected_type = "jpg"
     elif file_bytes.startswith(b"\x89PNG"):
         detected_type = "png"
-    elif file_bytes.startswith(b"%PDF-") or b"%PDF-" in file_bytes[:1024]:
+    elif file_bytes.lstrip().startswith(b"%PDF-"):
         detected_type = "pdf"
 
     if detected_type is None:

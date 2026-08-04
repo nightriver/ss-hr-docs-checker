@@ -5,7 +5,7 @@ Format: {Prizvyshche_Imya}_{file_label}[_p{N}].{ext}
 
 import os
 import re
-from text_utils import sanitize_filename, transliterate
+from text_utils import sanitize_filename
 
 
 def _capitalize_token(token: str) -> str:

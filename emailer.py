@@ -231,6 +231,9 @@ def create_mailer_from_secrets(secrets: dict) -> tuple[DocsMailer, str]:
     else:
         hr_to = str(raw_hr_to).strip()
 
+    if not hr_to:
+        raise ValueError("Адресу отримувача HR (hr_to) не вказано або вона порожня у налаштуваннях secrets.")
+
     if use_mock:
         provider: MailProvider = MockMailProvider(should_succeed=True)
     else:

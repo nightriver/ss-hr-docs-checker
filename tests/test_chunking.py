@@ -39,7 +39,7 @@ class TestChunking(unittest.TestCase):
         f1 = ProcessedFile(
             doc_id="passport",
             file_label="Pasport",
-            filename="large_passport.pdf",
+            filename="large_passport.jpg",
             content=oversized_bytes,
             doc_title="Паспорт або ID-карта",
         )
@@ -51,6 +51,21 @@ class TestChunking(unittest.TestCase):
         self.assertIn("завеликий", result.error_message)
         self.assertIn("19.0 MB", result.error_message)
         self.assertIn("300", result.error_message)
+
+    def test_single_pdf_document_oversize_blocking(self):
+        oversized_bytes = b"X" * (16 * 1024 * 1024)  # 16 MB
+        f1 = ProcessedFile(
+            doc_id="reserve_plus",
+            file_label="Reserve_plus",
+            filename="large_reserve.pdf",
+            content=oversized_bytes,
+            doc_title="Витяг з Резерв+",
+        )
+
+        result = pack_into_email_parts([f1])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.oversized_doc_id, "reserve_plus")
+        self.assertIn("меншого розміру", result.error_message)
 
     def test_multi_file_document_oversize_blocking(self):
         ten_mb = b"X" * (10 * 1024 * 1024)

@@ -6,7 +6,7 @@ greedy bin-packing, and email manifest text generation for HR Docs Checker v2.2.
 from dataclasses import dataclass, field
 from typing import Optional
 
-HARD_LIMIT_BYTES = 18 * 1024 * 1024  # 18 MB (18,874,368 bytes) raw binary size limit per email
+HARD_LIMIT_BYTES = 15 * 1024 * 1024  # 15 MB (15,728,640 bytes) raw binary size limit per email
 
 
 @dataclass
@@ -148,12 +148,19 @@ def pack_into_email_parts(
             doc_title = _get_doc_title(group)
             size_mb = g_size / (1024 * 1024)
             limit_mb = hard_limit_bytes / (1024 * 1024)
-            msg = (
-                f"Документ '{doc_title}' завеликий ({size_mb:.1f} MB) навіть після стиснення "
-                f"(перевищує ліміт {limit_mb:.0f} MB). "
-                f"Будь ласка, перескануйте або збережіть цей документ з меншим DPI (наприклад, 150 замість 300) "
-                f"або у чорно-білому режимі."
-            )
+            has_pdf = any(f.filename.lower().endswith(".pdf") for f in group)
+            if has_pdf:
+                msg = (
+                    f"Документ '{doc_title}' завеликий ({size_mb:.1f} MB) і перевищує ліміт {limit_mb:.0f} MB. "
+                    f"Будь ласка, завантажте файл меншого розміру."
+                )
+            else:
+                msg = (
+                    f"Документ '{doc_title}' завеликий ({size_mb:.1f} MB) навіть після стиснення "
+                    f"(перевищує ліміт {limit_mb:.0f} MB). "
+                    f"Будь ласка, перескануйте або збережіть цей документ з меншим DPI (наприклад, 150 замість 300) "
+                    f"або у чорно-білому режимі."
+                )
             return ChunkResult(
                 ok=False,
                 oversized_doc_id=doc_id,

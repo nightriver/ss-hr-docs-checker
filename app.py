@@ -16,7 +16,6 @@ import file_naming
 from instructions import INSTRUCTIONS
 from styles import CARD_CSS
 import uploads
-import validators
 
 st.set_page_config(
     page_title="Сервіс подачі та перевірки документів HR | Smart Solutions",
@@ -42,7 +41,7 @@ def validate_pib(pib_text: str) -> tuple[bool, str]:
         return False, "Будь ласка, вкажіть принаймні прізвище та ім'я (мінімум 2 слова)."
     if not re.search(r"[А-ЩЬЮЯҐЄІЇа-щьюяґєії]", pib):
         return False, "Будь ласка, вкажіть коректне ПІБ кирилицею (наприклад, Іваненко Петро)."
-    pattern = r"^[А-ЩЬЮЯҐЄІЇа-щьюяґєії\s'\-’ʼ`]+$"
+    pattern = r"^[А-ЩЬЮЯҐЄІЇа-щьюяґєії '\-’ʼ`]+$"
     if not re.match(pattern, pib):
         return False, "Будь ласка, вкажіть коректне ПІБ кирилицею (наприклад, Іваненко Петро)."
     return True, ""
@@ -114,7 +113,7 @@ st.markdown(f"""
 step = st.session_state.step
 
 if step <= TOTAL_STEPS:
-    st.progress(step / TOTAL_STEPS)
+    st.progress(step / (TOTAL_STEPS + 1))
     st.caption(f"Крок {step} з {TOTAL_STEPS}")
     st.markdown("---")
 
@@ -253,11 +252,17 @@ elif step == 7:
 # ── Фінальний екран (Step 8) ──
 elif step > TOTAL_STEPS:
     if st.session_state.get("send_success"):
-        st.balloons()
+        if not st.session_state.get("balloons_fired"):
+            st.balloons()
+            st.session_state["balloons_fired"] = True
         st.success("🎉 Всі документи успішно відправлені HR!")
         st.info("Ваші документи прийняті в обробку. HR-фахівець зв'яжеться з вами за потреби.")
         st.button("🔄 Почати спочатку", on_click=reset_app, use_container_width=True)
         st.stop()
+
+    smtp_sec = st.secrets.get("smtp", {})
+    if smtp_sec.get("use_mock", False):
+        st.warning("⚠️ Увага: Увімкнено MOCK-режим пошти. Листи не надсилаються в реальну скриньку HR.")
 
     st.success("✅ Ваш персональний перелік документів сформовано!")
     pib_disp = st.session_state.answers.get("pib", "Не вказано")
@@ -441,7 +446,7 @@ elif step > TOTAL_STEPS:
             else:
                 status.update(label="Помилка відправки", state="error")
                 st.toast("Не вдалося відправити пошту. Спробуйте ще раз.", icon="❌")
-                st.error("Під час відправки листів виникла помилка. Ви можете натиснути «Спробувати ще раз» — уже надіслані частини не дублюватимуться.")
+                st.error("Під час відправки листів виникла помилка. Ви можете повторно натиснути «Надіслати документи HR» — уже надіслані частини не дублюватимуться.")
 
     # Fallback buttons
     st.markdown("---")

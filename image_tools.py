@@ -50,7 +50,7 @@ def compress_image(
     # Open image safely
     try:
         img = Image.open(io.BytesIO(file_bytes))
-    except (UnidentifiedImageError, OSError, Exception) as e:
+    except Exception as e:
         logger.warning(f"Could not open image for compression: {e}")
         fallback_ext = _get_fallback_ext(original_filename, "jpg")
         return file_bytes, fallback_ext
@@ -110,8 +110,8 @@ def compress_image(
         fallback_ext = _get_fallback_ext(original_filename, "jpg")
         return file_bytes, fallback_ext
 
-    # 6. Size Increase Guard
-    if not transformed and len(best_bytes) >= len(file_bytes) and len(file_bytes) <= target_bytes:
+    # 6. Size Increase Guard: if compressed size >= original size, retain original
+    if len(best_bytes) >= len(file_bytes):
         fallback_ext = _get_fallback_ext(original_filename, "jpg")
         return file_bytes, fallback_ext
 

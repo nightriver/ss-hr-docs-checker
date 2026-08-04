@@ -67,13 +67,52 @@ def render_upload_card(doc_spec: dict) -> None:
             st.caption("📷 Оригінал надається особисто/поштою в кадровий відділ. Завантаження через форму не потрібне.")
         return
 
-    # 2. Extract current state for doc_id
-    current_files: list[dict] = st.session_state["uploaded_docs"].get(doc_id, [])
+    # 2. Process uploaded files from Streamlit session state BEFORE rendering header badge
+    uploader_key = f"uploader_{doc_id}"
+    uploaded_raw = st.session_state.get(uploader_key)
 
-    # Determine status icon for header badge
-    has_blocking = any(f["validation"].blocking for f in current_files)
-    has_warning = any(f["validation"].ok and f["validation"].reason for f in current_files)
-    has_uploaded = len(current_files) > 0
+    new_file_entries: list[dict] = []
+    if uploaded_raw:
+        raw_list = uploaded_raw if isinstance(uploaded_raw, list) else [uploaded_raw]
+
+        for file_obj in raw_list:
+            file_bytes = file_obj.getvalue()
+            fname = file_obj.name
+            fsize = len(file_bytes)
+
+            if special_val == "reserve_plus_pdf":
+                val_res = validators.validate_reserve_plus_pdf(file_bytes)
+            else:
+                val_res = validators.validate_mime_type(file_bytes, fname, accept_exts)
+
+            if val_res.blocking and val_res.reason:
+                err_sig = f"{doc_id}_{fname}_{val_res.reason}"
+                if err_sig not in st.session_state["toasted_errors"]:
+                    st.toast(f"🚫 {title}: {val_res.reason}", icon="🚫")
+                    st.session_state["toasted_errors"].add(err_sig)
+
+            new_file_entries.append({
+                "bytes": file_bytes,
+                "filename": fname,
+                "size": fsize,
+                "validation": val_res,
+            })
+
+    # Reset sent_parts if file state changed to prevent partial retry corruption
+    old_entries = st.session_state["uploaded_docs"].get(doc_id, [])
+    if len(old_entries) != len(new_file_entries) or any(
+        o["filename"] != n["filename"] or o["size"] != n["size"]
+        for o, n in zip(old_entries, new_file_entries)
+    ):
+        if "sent_parts" in st.session_state:
+            st.session_state["sent_parts"].clear()
+
+    st.session_state["uploaded_docs"][doc_id] = new_file_entries
+
+    # Determine status icon for header badge synchronously
+    has_blocking = any(f["validation"].blocking for f in new_file_entries)
+    has_warning = any(f["validation"].ok and f["validation"].reason for f in new_file_entries)
+    has_uploaded = len(new_file_entries) > 0
 
     if has_blocking:
         badge_icon = "🚫"
@@ -103,8 +142,7 @@ def render_upload_card(doc_spec: dict) -> None:
                     st.markdown(f"{i}. {step_text}")
 
         # 3. File Uploader Widget (inside card container)
-        uploader_key = f"uploader_{doc_id}"
-        uploaded_raw = st.file_uploader(
+        st.file_uploader(
             label=f"Оберіть файл ({', '.join(accept_exts).upper()})",
             type=accept_exts,
             accept_multiple_files=multiple,
@@ -112,42 +150,7 @@ def render_upload_card(doc_spec: dict) -> None:
             help="Максимальний розмір одного файлу: 15 MB",
         )
 
-        # 4. Processing Uploaded Files & Bytes Conversion
-        new_file_entries: list[dict] = []
-
-        if uploaded_raw:
-            raw_list = uploaded_raw if isinstance(uploaded_raw, list) else [uploaded_raw]
-
-            for file_obj in raw_list:
-                # Raw Bytes Extraction - prevents stream exhaustion
-                file_bytes = file_obj.getvalue()
-                fname = file_obj.name
-                fsize = len(file_bytes)
-
-                # Live Validation Execution
-                if special_val == "reserve_plus_pdf":
-                    val_res = validators.validate_reserve_plus_pdf(file_bytes)
-                else:
-                    val_res = validators.validate_mime_type(file_bytes, fname, accept_exts)
-
-                # Blocking error Toast trigger (with deduplication)
-                if val_res.blocking and val_res.reason:
-                    err_sig = f"{doc_id}_{fname}_{val_res.reason}"
-                    if err_sig not in st.session_state["toasted_errors"]:
-                        st.toast(f"🚫 {title}: {val_res.reason}", icon="🚫")
-                        st.session_state["toasted_errors"].add(err_sig)
-
-                new_file_entries.append({
-                    "bytes": file_bytes,
-                    "filename": fname,
-                    "size": fsize,
-                    "validation": val_res,
-                })
-
-        # Sync with Session State
-        st.session_state["uploaded_docs"][doc_id] = new_file_entries
-
-        # 5. Status Feedback Box on Card (inside card container)
+        # 4. Status Feedback Box on Card (inside card container)
         if new_file_entries:
             total_bytes = sum(f["size"] for f in new_file_entries)
             total_mb = total_bytes / (1024 * 1024)
@@ -243,7 +246,7 @@ def validate_all_uploads(docs: list[dict]) -> tuple[bool, list[str]]:
         min_files = doc.get("min_files", 1)
         doc_files = uploaded.get(doc_id, [])
 
-        if important and min_files > 0 and not doc_files:
+        if important and len(doc_files) < min_files:
             errors.append(f"Не завантажено обов'язковий документ: '{title}'")
             continue
 
