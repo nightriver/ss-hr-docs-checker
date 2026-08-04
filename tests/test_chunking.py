@@ -89,15 +89,15 @@ class TestChunking(unittest.TestCase):
 
     def test_bin_packing_atomic_group_integrity(self):
         # passport group = 10 MB (2 files x 5 MB)
-        # ipn group = 4 MB
+        # ipn group = 3 MB
         # etk group = 6 MB
         five_mb = b"X" * (5 * 1024 * 1024)
-        four_mb = b"X" * (4 * 1024 * 1024)
+        three_mb = b"X" * (3 * 1024 * 1024)
         six_mb = b"X" * (6 * 1024 * 1024)
 
         f_pass1 = ProcessedFile(doc_id="passport", file_label="Pasport", filename="p1.jpg", content=five_mb, doc_title="Паспорт")
         f_pass2 = ProcessedFile(doc_id="passport", file_label="Pasport", filename="p2.jpg", content=five_mb, doc_title="Паспорт")
-        f_ipn = ProcessedFile(doc_id="ipn", file_label="IPN", filename="ipn.pdf", content=four_mb, doc_title="ІПН")
+        f_ipn = ProcessedFile(doc_id="ipn", file_label="IPN", filename="ipn.pdf", content=three_mb, doc_title="ІПН")
         f_etk = ProcessedFile(doc_id="etk", file_label="ETK", filename="etk.pdf", content=six_mb, doc_title="Трудова книжка")
 
         result = pack_into_email_parts([f_pass1, f_pass2, f_ipn, f_etk])

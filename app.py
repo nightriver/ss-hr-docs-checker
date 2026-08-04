@@ -33,7 +33,8 @@ def validate_pib(pib_text: str) -> tuple[bool, str]:
     """
     if not pib_text:
         return False, "Будь ласка, вкажіть ваші ПІБ."
-    pib = pib_text.strip()
+    # Normalize whitespace (including non-breaking spaces \u00a0, tabs, newlines)
+    pib = re.sub(r"\s+", " ", pib_text).strip()
     if not pib:
         return False, "Будь ласка, вкажіть ваші ПІБ."
     words = pib.split()
@@ -45,20 +46,6 @@ def validate_pib(pib_text: str) -> tuple[bool, str]:
     if not re.match(pattern, pib):
         return False, "Будь ласка, вкажіть коректне ПІБ кирилицею (наприклад, Іваненко Петро)."
     return True, ""
-
-
-def check_mandatory_uploads(docs: list[dict], uploaded_docs: dict) -> bool:
-    """
-    Helper to check if all mandatory documents have at least one uploaded file.
-    """
-    for d in docs:
-        if not d.get("upload_enabled", True):
-            continue
-        if d.get("important", True) and d.get("min_files", 1) >= 1:
-            doc_files = uploaded_docs.get(d["doc_id"], [])
-            if not doc_files:
-                return False
-    return True
 
 
 if "step" not in st.session_state:
@@ -251,6 +238,14 @@ elif step == 7:
 
 # ── Фінальний екран (Step 8) ──
 elif step > TOTAL_STEPS:
+    try:
+        smtp_sec = st.secrets.get("smtp", {})
+    except Exception:
+        smtp_sec = {}
+
+    if smtp_sec.get("use_mock", False):
+        st.warning("⚠️ Увага: Увімкнено MOCK-режим пошти. Листи не надсилаються в реальну скриньку HR.")
+
     if st.session_state.get("send_success"):
         if not st.session_state.get("balloons_fired"):
             st.balloons()
@@ -259,14 +254,6 @@ elif step > TOTAL_STEPS:
         st.info("Ваші документи прийняті в обробку. HR-фахівець зв'яжеться з вами за потреби.")
         st.button("🔄 Почати спочатку", on_click=reset_app, use_container_width=True)
         st.stop()
-
-    try:
-        smtp_sec = st.secrets.get("smtp", {})
-    except Exception:
-        smtp_sec = {}
-
-    if smtp_sec.get("use_mock", False):
-        st.warning("⚠️ Увага: Увімкнено MOCK-режим пошти. Листи не надсилаються в реальну скриньку HR.")
 
     st.success("✅ Ваш персональний перелік документів сформовано!")
     pib_disp = st.session_state.answers.get("pib", "Не вказано")

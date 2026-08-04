@@ -3,7 +3,7 @@ tests/test_app_logic.py — Unit tests for app wizard logic, PIB validation, and
 """
 
 import unittest
-from app import validate_pib, check_mandatory_uploads
+from app import validate_pib
 from documents import DEFAULT_ANSWERS
 import emailer
 from validators import validate_reserve_plus_pdf
@@ -38,31 +38,6 @@ class TestAppLogic(unittest.TestCase):
             is_valid, msg = validate_pib(name)
             self.assertFalse(is_valid, f"Expected invalid for: '{name}'")
             self.assertGreater(len(msg), 0)
-
-    def test_check_mandatory_uploads(self):
-        """Test check_mandatory_uploads helper function."""
-        docs = [
-            {"doc_id": "pasport", "important": True, "min_files": 1, "upload_enabled": True},
-            {"doc_id": "ipn", "important": True, "min_files": 1, "upload_enabled": True},
-            {"doc_id": "photo", "important": True, "min_files": 0, "upload_enabled": False},
-            {"doc_id": "vpo", "important": False, "min_files": 1, "upload_enabled": True},
-        ]
-
-        # Scenario 1: missing all mandatory
-        self.assertFalse(check_mandatory_uploads(docs, {}))
-
-        # Scenario 2: missing IPN
-        uploaded_partial = {
-            "pasport": [{"bytes": b"pass"}]
-        }
-        self.assertFalse(check_mandatory_uploads(docs, uploaded_partial))
-
-        # Scenario 3: all mandatory present
-        uploaded_full = {
-            "pasport": [{"bytes": b"pass"}],
-            "ipn": [{"bytes": b"ipn"}],
-        }
-        self.assertTrue(check_mandatory_uploads(docs, uploaded_full))
 
     def test_default_answers(self):
         """Test default answers dictionary values."""

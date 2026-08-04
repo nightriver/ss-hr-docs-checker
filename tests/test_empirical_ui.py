@@ -322,7 +322,8 @@ class TestEmpiricalM3(unittest.TestCase):
             self.assertFalse(ok)
 
         docs = build_documents({"military_liable": "Ні"})
-        self.assertFalse(app.check_mandatory_uploads(docs, {}))
+        is_valid, _ = uploads.validate_all_uploads(docs)
+        self.assertFalse(is_valid)
 
 
 if __name__ == "__main__":

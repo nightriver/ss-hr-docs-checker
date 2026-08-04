@@ -76,7 +76,7 @@ def compress_image(
 
         has_transparency = False
         # 3. Transparency & Alpha Flattening to solid white background
-        if img.mode in ("RGBA", "LA", "P") or "transparency" in img.info:
+        if img.mode in ("RGBA", "LA") or "transparency" in img.info:
             has_transparency = True
             transformed = True
             img = img.convert("RGBA")

@@ -22,7 +22,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import streamlit as st
-from app import validate_pib, check_mandatory_uploads
+from app import validate_pib
 from documents import build_documents, DEFAULT_ANSWERS
 import uploads
 import validators

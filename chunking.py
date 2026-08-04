@@ -6,7 +6,7 @@ greedy bin-packing, and email manifest text generation for HR Docs Checker v2.2.
 from dataclasses import dataclass, field
 from typing import Optional
 
-HARD_LIMIT_BYTES = 15 * 1024 * 1024  # 15 MB (15,728,640 bytes) raw binary size limit per email
+HARD_LIMIT_BYTES = 14 * 1024 * 1024  # 14 MB (14,680,064 bytes) raw binary size limit per email (~18.8 MB Base64 MIME)
 
 
 @dataclass

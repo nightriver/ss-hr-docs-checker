@@ -169,10 +169,10 @@ def render_upload_card(doc_spec: dict) -> None:
             else:
                 st.success(f"✅ Завантажено {file_count} файл(ів) ({total_mb:.2f} MB)")
         else:
-            if important:
+            if min_files > 0:
                 st.caption("⏳ Файл ще не завантажено (обов'язковий документ)")
             else:
-                st.caption("ℹ️ Файл не завантажено (необов'язковий документ)")
+                st.caption("ℹ️ Файл не завантажено (необов'язкове завантаження)")
 
 
 def get_upload_summary(docs: list[dict]) -> dict:
