@@ -74,8 +74,10 @@ def compress_image(
         except Exception as e:
             logger.warning(f"ImageOps.exif_transpose failed: {e}")
 
+        has_transparency = False
         # 3. Transparency & Alpha Flattening to solid white background
         if img.mode in ("RGBA", "LA", "P") or "transparency" in img.info:
+            has_transparency = True
             transformed = True
             img = img.convert("RGBA")
             background = Image.new("RGB", img.size, (255, 255, 255))
@@ -111,7 +113,10 @@ def compress_image(
         return file_bytes, fallback_ext
 
     # 6. Size Increase Guard: if compressed size >= original size, retain original
+    # unless image had transparency that required JPEG flattening
     if len(best_bytes) >= len(file_bytes):
+        if has_transparency:
+            return best_bytes, "jpg"
         fallback_ext = _get_fallback_ext(original_filename, "jpg")
         return file_bytes, fallback_ext
 
