@@ -136,7 +136,7 @@ elif step == 2:
         "Жінки — якщо мають медичну або фармацевтичну освіту, або добровільно проходять / проходили службу."
     )
     options2 = ["Так", "Ні"]
-    cur_val = st.session_state.answers.get("military_liable", "Ні")
+    cur_val = st.session_state.answers.get("military_liable", "Так")
     val = st.radio(
         "Оберіть варіант:",
         options2,

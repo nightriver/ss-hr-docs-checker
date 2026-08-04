@@ -4,7 +4,7 @@ documents.py — Document schema definitions and generator for HR Docs Checker v
 
 DEFAULT_ANSWERS = {
     "pib": "",
-    "military_liable": "Ні",
+    "military_liable": "Так",
     "labor_book": "Є трудова книжка",
     "education": "Шкільний атестат",
     "student_day_form": "Ні",
@@ -147,15 +147,15 @@ def build_documents(answers: dict = None) -> list[dict]:
         "doc_id": "photo",
         "title": "Фото 3×4",
         "file_label": "Photo",
-        "details": "2 екземпляри, надати в оригіналі при заповненні документів на оформлення.",
-        "format": "Оригінал",
+        "details": "2 екземпляри у паперовому вигляді (при оформленні) АБО електронне фото 3×4 у форматі JPG/PNG.",
+        "format": "Оригінал (2 шт.) або Електронне фото",
         "instruction_key": None,
         "important": True,
-        "hr_note": None,
+        "hr_note": "Якщо ви завантажите цифрове фото сюди, надавати паперові оригінали 3×4 не потрібно.",
         "accept": ["jpg", "jpeg", "png"],
         "multiple": False,
         "min_files": 0,
-        "upload_enabled": False,
+        "upload_enabled": True,
         "special_validation": None,
     })
 
@@ -165,7 +165,7 @@ def build_documents(answers: dict = None) -> list[dict]:
             "title": "Витяг з Резерв+",
             "file_label": "Reserve_plus",
             "details": (
-                "Роздруківка або PDF з застосунку Резерв+ на поточну дату. "
+                "Електронний PDF-витяг з застосунку Резерв+ на поточну дату. "
                 "З грудня 2025 року електронний ВОД у Резерв+ є основним та єдиним "
                 "офіційним військово-обліковим документом (постанова КМУ № 559)."
             ),

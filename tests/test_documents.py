@@ -103,13 +103,13 @@ class TestDocumentsSchema(unittest.TestCase):
                 if doc["special_validation"] is not None:
                     self.assertIsInstance(doc["special_validation"], str)
 
-    def test_photo_3x4_non_uploadable_rule(self):
-        """Verify Photo 3x4 schema constraints (upload_enabled=False, min_files=0)."""
+    def test_photo_3x4_uploadable_optional_rule(self):
+        """Verify Photo 3x4 schema constraints (upload_enabled=True, min_files=0 optional upload)."""
         docs = build_documents(DEFAULT_ANSWERS)
         photo_docs = [d for d in docs if d["doc_id"] == "photo"]
         self.assertEqual(len(photo_docs), 1)
         photo = photo_docs[0]
-        self.assertFalse(photo["upload_enabled"])
+        self.assertTrue(photo["upload_enabled"])
         self.assertEqual(photo["min_files"], 0)
         self.assertEqual(photo["file_label"], "Photo")
 

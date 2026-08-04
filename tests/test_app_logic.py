@@ -68,7 +68,7 @@ class TestAppLogic(unittest.TestCase):
         """Test default answers dictionary values."""
         self.assertEqual(DEFAULT_ANSWERS["pib"], "")
         self.assertEqual(DEFAULT_ANSWERS["student_day_form"], "Ні")
-        self.assertEqual(DEFAULT_ANSWERS["military_liable"], "Ні")
+        self.assertEqual(DEFAULT_ANSWERS["military_liable"], "Так")
         self.assertEqual(DEFAULT_ANSWERS["labor_book"], "Є трудова книжка")
         self.assertEqual(DEFAULT_ANSWERS["extra_statuses"], [])
 
