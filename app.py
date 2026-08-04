@@ -260,7 +260,11 @@ elif step > TOTAL_STEPS:
         st.button("🔄 Почати спочатку", on_click=reset_app, use_container_width=True)
         st.stop()
 
-    smtp_sec = st.secrets.get("smtp", {})
+    try:
+        smtp_sec = st.secrets.get("smtp", {})
+    except Exception:
+        smtp_sec = {}
+
     if smtp_sec.get("use_mock", False):
         st.warning("⚠️ Увага: Увімкнено MOCK-режим пошти. Листи не надсилаються в реальну скриньку HR.")
 
