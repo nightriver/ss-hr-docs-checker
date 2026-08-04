@@ -42,6 +42,7 @@ def render_upload_card(doc_spec: dict) -> None:
     details = doc_spec.get("details", "")
     fmt = doc_spec.get("format", "")
     important = doc_spec.get("important", True)
+    min_files = doc_spec.get("min_files", 1)
     upload_enabled = doc_spec.get("upload_enabled", True)
     hr_note = doc_spec.get("hr_note")
     instruction_key = doc_spec.get("instruction_key")
