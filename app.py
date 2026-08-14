@@ -56,8 +56,8 @@ def validate_phone(phone_text: str) -> tuple[bool, str, str]:
     if not phone_text:
         return False, "Будь ласка, вкажіть контактний номер телефону.", ""
     cleaned = re.sub(r"[\s\u00a0\-\(\)\.]+", "", phone_text)
-    if not cleaned:
-        return False, "Будь ласка, вкажіть контактний номер телефону.", ""
+    if not cleaned or not cleaned.isascii():
+        return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
 
     if cleaned.startswith("+"):
         digits = cleaned[1:]
@@ -91,12 +91,12 @@ def validate_email(email_text: str) -> tuple[bool, str, str]:
     if not email_text:
         return False, "Будь ласка, вкажіть вашу електронну пошту.", ""
     cleaned = email_text.strip().lower()
-    if not cleaned:
-        return False, "Будь ласка, вкажіть вашу електронну пошту.", ""
+    if not cleaned or not cleaned.isascii():
+        return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
     if len(cleaned) > 254:
         return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
 
-    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$"
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+$"
     if not re.match(pattern, cleaned):
         return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
 

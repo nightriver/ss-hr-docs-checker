@@ -56,7 +56,7 @@ class TestAppLogic(unittest.TestCase):
             self.assertEqual(norm, expected_norm)
 
     def test_validate_phone_invalid(self):
-        """Test invalid phone inputs (empty, letters, short, bad prefixes, excessive digits)."""
+        """Test invalid phone inputs (empty, letters, short, bad prefixes, excessive digits, non-ASCII Unicode digits)."""
         invalid_inputs = [
             "",
             "   ",
@@ -68,6 +68,8 @@ class TestAppLogic(unittest.TestCase):
             "+38050123456a",  # contains letter
             "+123",  # international with < 10 digits
             "+1234567890123456",  # international with > 15 digits
+            "+38050123456²",  # Unicode superscript digit
+            "+٠١٢٣٤٥٦٧٨٩١٢",  # Arabic-Indic digits
         ]
         for input_val in invalid_inputs:
             ok, err, norm = validate_phone(input_val)
@@ -90,7 +92,7 @@ class TestAppLogic(unittest.TestCase):
             self.assertEqual(norm, expected_norm)
 
     def test_validate_email_invalid(self):
-        """Test invalid email inputs (empty, spaces inside, missing @, missing domain/TLD, short TLD)."""
+        """Test invalid email inputs (empty, spaces inside, missing @, missing domain/TLD, short TLD, leading/trailing hyphen in domain, Cyrillic)."""
         invalid_inputs = [
             "",
             "   ",
@@ -100,6 +102,10 @@ class TestAppLogic(unittest.TestCase):
             "user@domain.c",  # TLD < 2 chars
             "plainaddress",
             "user@.com",
+            "user@-domain.com",  # Domain starting with hyphen
+            "user@domain-.com",  # Domain ending with hyphen
+            "user@domain.-com",  # Subdomain starting with hyphen
+            "ivan@пошта.укр",    # Non-ASCII Cyrillic domain
         ]
         for input_val in invalid_inputs:
             ok, err, norm = validate_email(input_val)
