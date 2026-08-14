@@ -28,6 +28,10 @@ class TestDocumentsSchema(unittest.TestCase):
         """Verify DEFAULT_ANSWERS dictionary contains required default keys."""
         self.assertIn("pib", DEFAULT_ANSWERS)
         self.assertEqual(DEFAULT_ANSWERS["pib"], "")
+        self.assertIn("phone", DEFAULT_ANSWERS)
+        self.assertEqual(DEFAULT_ANSWERS["phone"], "")
+        self.assertIn("email", DEFAULT_ANSWERS)
+        self.assertEqual(DEFAULT_ANSWERS["email"], "")
         self.assertIn("student_day_form", DEFAULT_ANSWERS)
         self.assertEqual(DEFAULT_ANSWERS["student_day_form"], "Ні")
         self.assertIn("military_liable", DEFAULT_ANSWERS)

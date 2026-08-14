@@ -131,6 +131,7 @@ class TestBuildEmailMessage(unittest.TestCase):
         self.assertEqual(msg["Subject"], "Test Subject")
         self.assertEqual(msg["From"], "from@test.com")
         self.assertEqual(msg["To"], "to@test.com")
+        self.assertIsNone(msg["Reply-To"])
         self.assertEqual(msg.get_body(preferencelist=("plain",)).get_content().strip(), "Test Body Text")
 
         attachments = list(msg.iter_attachments())
@@ -139,6 +140,16 @@ class TestBuildEmailMessage(unittest.TestCase):
         self.assertEqual(attachments[0].get_content_type(), "application/pdf")
         self.assertEqual(attachments[1].get_filename(), "photo.jpg")
         self.assertEqual(attachments[1].get_content_type(), "image/jpeg")
+
+    def test_build_email_message_with_reply_to(self):
+        msg = build_email_message(
+            from_addr="from@test.com",
+            to_addr="to@test.com",
+            subject="Test Subject",
+            body_text="Test Body Text",
+            reply_to="candidate@example.com",
+        )
+        self.assertEqual(msg["Reply-To"], "candidate@example.com")
 
 
 class TestLoggingPrivacy(unittest.TestCase):

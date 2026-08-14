@@ -48,6 +48,65 @@ def validate_pib(pib_text: str) -> tuple[bool, str]:
     return True, ""
 
 
+def validate_phone(phone_text: str) -> tuple[bool, str, str]:
+    """
+    Validates and normalizes candidate phone input.
+    Returns (ok, error_msg, normalized_phone).
+    """
+    if not phone_text:
+        return False, "Будь ласка, вкажіть контактний номер телефону.", ""
+    cleaned = re.sub(r"[\s\u00a0\-\(\)\.]+", "", phone_text)
+    if not cleaned:
+        return False, "Будь ласка, вкажіть контактний номер телефону.", ""
+
+    if cleaned.startswith("+"):
+        digits = cleaned[1:]
+        if not digits.isdigit():
+            return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+        if cleaned.startswith("+380"):
+            if len(digits) == 12:
+                return True, "", cleaned
+            return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+        else:
+            if 10 <= len(digits) <= 15:
+                return True, "", cleaned
+            return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+    elif cleaned.startswith("380"):
+        if cleaned.isdigit() and len(cleaned) == 12:
+            return True, "", "+" + cleaned
+        return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+    elif cleaned.startswith("0"):
+        if cleaned.isdigit() and len(cleaned) == 10:
+            return True, "", "+38" + cleaned
+        return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+    else:
+        return False, "Вкажіть коректний номер телефону, наприклад +380501234567 або 0501234567.", ""
+
+
+def validate_email(email_text: str) -> tuple[bool, str, str]:
+    """
+    Validates and normalizes candidate email input.
+    Returns (ok, error_msg, normalized_email).
+    """
+    if not email_text:
+        return False, "Будь ласка, вкажіть вашу електронну пошту.", ""
+    cleaned = email_text.strip().lower()
+    if not cleaned:
+        return False, "Будь ласка, вкажіть вашу електронну пошту.", ""
+    if len(cleaned) > 254:
+        return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
+
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$"
+    if not re.match(pattern, cleaned):
+        return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
+
+    tld = cleaned.rsplit(".", 1)[-1]
+    if len(tld) < 2:
+        return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
+
+    return True, "", cleaned
+
+
 if "step" not in st.session_state:
     st.session_state.step = 1
 if "answers" not in st.session_state:
@@ -106,13 +165,25 @@ if step <= TOTAL_STEPS:
 
 # ── Крок 1 ──
 if step == 1:
-    st.subheader("Введіть ваше ПІБ (Прізвище, Ім'я, По батькові)")
-    st.caption("Вкажіть ваші повні дані кирилицею так, як у паспорті. Вони будуть використані для генерації назв вкладень та повідомлення HR.")
+    st.subheader("Введіть ваші контактні дані")
+    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), контактний номер телефону та email. Вони необхідні для зв'язку HR-фахівця з вами.")
     pib_val = st.text_input(
         "ПІБ кандидата:",
         value=st.session_state.answers.get("pib", ""),
         placeholder="Іваненко Петро Олексійович",
         key="input_pib",
+    )
+    phone_val = st.text_input(
+        "Номер телефону:",
+        value=st.session_state.answers.get("phone", ""),
+        placeholder="+380501234567",
+        key="input_phone",
+    )
+    email_val = st.text_input(
+        "Електронна пошта (Email):",
+        value=st.session_state.answers.get("email", ""),
+        placeholder="candidate@example.com",
+        key="input_email",
     )
 
 # ── Крок 2 ──
@@ -257,7 +328,9 @@ elif step > TOTAL_STEPS:
 
     st.success("✅ Ваш персональний перелік документів сформовано!")
     pib_disp = st.session_state.answers.get("pib", "Не вказано")
-    st.caption(f"Кандидат: **{pib_disp}**")
+    phone_disp = st.session_state.answers.get("phone", "Не вказано")
+    email_disp = st.session_state.answers.get("email", "Не вказано")
+    st.caption(f"Кандидат: **{pib_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
 
     docs = build_documents(st.session_state.answers)
 
@@ -384,6 +457,8 @@ elif step > TOTAL_STEPS:
 
                 body_lines = [
                     f"Кандидат: {pib_str}",
+                    f"Телефон: {st.session_state.answers.get('phone', '-')}",
+                    f"Email: {st.session_state.answers.get('email', '-')}",
                     f"Військовозобов'язаний: {st.session_state.answers.get('military_liable', '-')}",
                     f"Трудова книжка: {st.session_state.answers.get('labor_book', '-')}",
                     f"Освіта: {st.session_state.answers.get('education', '-')}",
@@ -416,6 +491,7 @@ elif step > TOTAL_STEPS:
                     subject=subject,
                     body_text=body_text,
                     attachments=attachments,
+                    reply_to=st.session_state.answers.get("email") or None,
                 )
                 email_messages.append(msg)
 
@@ -482,12 +558,17 @@ with col2:
     if st.session_state.step < TOTAL_STEPS:
         if st.button("Далі →", type="primary", use_container_width=True):
             if step == 1:
-                pib_input = st.session_state.get("input_pib", "")
-                is_pib_valid, pib_err = validate_pib(pib_input)
-                if not is_pib_valid:
-                    st.error(pib_err)
+                ok_pib, err_pib = validate_pib(st.session_state.get("input_pib", ""))
+                ok_phone, err_phone, phone_norm = validate_phone(st.session_state.get("input_phone", ""))
+                ok_email, err_email, email_norm = validate_email(st.session_state.get("input_email", ""))
+                errors = [e for ok, e in ((ok_pib, err_pib), (ok_phone, err_phone), (ok_email, err_email)) if not ok]
+                if errors:
+                    for e in errors:
+                        st.error(e)
                 else:
-                    st.session_state.answers["pib"] = pib_input.strip()
+                    st.session_state.answers["pib"] = st.session_state.get("input_pib", "").strip()
+                    st.session_state.answers["phone"] = phone_norm
+                    st.session_state.answers["email"] = email_norm
                     st.session_state.step += 1
                     st.rerun()
             else:

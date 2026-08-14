@@ -167,6 +167,7 @@ def build_email_message(
     subject: str,
     body_text: str,
     attachments: Optional[Sequence[AttachmentDict]] = None,
+    reply_to: Optional[str] = None,
 ) -> EmailMessage:
     """
     Constructs an EmailMessage with UTF-8 plain text body and MIME attachments.
@@ -175,6 +176,8 @@ def build_email_message(
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(body_text, charset="utf-8")
 
     if attachments:

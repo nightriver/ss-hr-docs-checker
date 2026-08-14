@@ -3,7 +3,7 @@ tests/test_app_logic.py — Unit tests for app wizard logic, PIB validation, and
 """
 
 import unittest
-from app import validate_pib
+from app import validate_pib, validate_phone, validate_email
 from documents import DEFAULT_ANSWERS
 import emailer
 from validators import validate_reserve_plus_pdf
@@ -39,9 +39,79 @@ class TestAppLogic(unittest.TestCase):
             self.assertFalse(is_valid, f"Expected invalid for: '{name}'")
             self.assertGreater(len(msg), 0)
 
+    def test_validate_phone_valid(self):
+        """Test valid phone formats and verify correct normalization."""
+        cases = [
+            ("+380501234567", "+380501234567"),
+            ("0501234567", "+380501234567"),
+            ("+38 (050) 123-45-67", "+380501234567"),
+            ("380501234567", "+380501234567"),
+            ("+14155552671", "+14155552671"),
+            ("+44 20 7183-8750", "+442071838750"),
+        ]
+        for input_val, expected_norm in cases:
+            ok, err, norm = validate_phone(input_val)
+            self.assertTrue(ok, f"Failed for valid phone: {input_val} ({err})")
+            self.assertEqual(err, "")
+            self.assertEqual(norm, expected_norm)
+
+    def test_validate_phone_invalid(self):
+        """Test invalid phone inputs (empty, letters, short, bad prefixes, excessive digits)."""
+        invalid_inputs = [
+            "",
+            "   ",
+            "123",
+            "abc",
+            "+380",
+            "05012345678",  # 11 digits starting with 0
+            "1234567890",   # 10 digits not starting with 0 or +
+            "+38050123456a",  # contains letter
+            "+123",  # international with < 10 digits
+            "+1234567890123456",  # international with > 15 digits
+        ]
+        for input_val in invalid_inputs:
+            ok, err, norm = validate_phone(input_val)
+            self.assertFalse(ok, f"Expected invalid for phone: '{input_val}'")
+            self.assertGreater(len(err), 0)
+            self.assertEqual(norm, "")
+
+    def test_validate_email_valid(self):
+        """Test valid email addresses and normalization to lowercase."""
+        cases = [
+            ("user@example.com", "user@example.com"),
+            ("  Name.Surname@Smart-Solutions.UA  ", "name.surname@smart-solutions.ua"),
+            ("test+label@domain.co", "test+label@domain.co"),
+            ("hr_support@sub.domain.org", "hr_support@sub.domain.org"),
+        ]
+        for input_val, expected_norm in cases:
+            ok, err, norm = validate_email(input_val)
+            self.assertTrue(ok, f"Failed for valid email: {input_val} ({err})")
+            self.assertEqual(err, "")
+            self.assertEqual(norm, expected_norm)
+
+    def test_validate_email_invalid(self):
+        """Test invalid email inputs (empty, spaces inside, missing @, missing domain/TLD, short TLD)."""
+        invalid_inputs = [
+            "",
+            "   ",
+            "user name@mail.com",
+            "test@",
+            "@domain.com",
+            "user@domain.c",  # TLD < 2 chars
+            "plainaddress",
+            "user@.com",
+        ]
+        for input_val in invalid_inputs:
+            ok, err, norm = validate_email(input_val)
+            self.assertFalse(ok, f"Expected invalid for email: '{input_val}'")
+            self.assertGreater(len(err), 0)
+            self.assertEqual(norm, "")
+
     def test_default_answers(self):
         """Test default answers dictionary values."""
         self.assertEqual(DEFAULT_ANSWERS["pib"], "")
+        self.assertEqual(DEFAULT_ANSWERS["phone"], "")
+        self.assertEqual(DEFAULT_ANSWERS["email"], "")
         self.assertEqual(DEFAULT_ANSWERS["student_day_form"], "Ні")
         self.assertEqual(DEFAULT_ANSWERS["military_liable"], "Так")
         self.assertEqual(DEFAULT_ANSWERS["labor_book"], "Є трудова книжка")
