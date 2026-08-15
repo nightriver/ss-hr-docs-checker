@@ -86,12 +86,15 @@ def validate_phone(phone_text: str) -> tuple[bool, str, str]:
 def validate_email(email_text: str) -> tuple[bool, str, str]:
     """
     Validates and normalizes candidate email input.
-    Returns (ok, error_msg, normalized_email).
+    Email is optional: empty input returns (True, "", "").
+    If provided, validates format and returns (ok, error_msg, normalized_email).
     """
     if not email_text:
-        return False, "Будь ласка, вкажіть вашу електронну пошту.", ""
+        return True, "", ""
     cleaned = email_text.strip().lower()
-    if not cleaned or not cleaned.isascii():
+    if not cleaned:
+        return True, "", ""
+    if not cleaned.isascii():
         return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
     if len(cleaned) > 254:
         return False, "Вкажіть коректну електронну пошту, наприклад candidate@example.com.", ""
@@ -166,7 +169,7 @@ if step <= TOTAL_STEPS:
 # ── Крок 1 ──
 if step == 1:
     st.subheader("Введіть ваші контактні дані")
-    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), контактний номер телефону та email. Вони необхідні для зв'язку HR-фахівця з вами.")
+    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), контактний номер телефону та email (за наявності). Вони необхідні для зв'язку HR-фахівця з вами.")
     pib_val = st.text_input(
         "ПІБ кандидата:",
         value=st.session_state.answers.get("pib", ""),
@@ -180,7 +183,7 @@ if step == 1:
         key="input_phone",
     )
     email_val = st.text_input(
-        "Електронна пошта (Email):",
+        "Електронна пошта (Email, необов'язково):",
         value=st.session_state.answers.get("email", ""),
         placeholder="candidate@example.com",
         key="input_email",
@@ -327,9 +330,9 @@ elif step > TOTAL_STEPS:
         st.stop()
 
     st.success("✅ Ваш персональний перелік документів сформовано!")
-    pib_disp = st.session_state.answers.get("pib", "Не вказано")
-    phone_disp = st.session_state.answers.get("phone", "Не вказано")
-    email_disp = st.session_state.answers.get("email", "Не вказано")
+    pib_disp = st.session_state.answers.get("pib") or "Не вказано"
+    phone_disp = st.session_state.answers.get("phone") or "Не вказано"
+    email_disp = st.session_state.answers.get("email") or "Не вказано"
     st.caption(f"Кандидат: **{pib_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
 
     docs = build_documents(st.session_state.answers)
@@ -457,8 +460,8 @@ elif step > TOTAL_STEPS:
 
                 body_lines = [
                     f"Кандидат: {pib_str}",
-                    f"Телефон: {st.session_state.answers.get('phone', '-')}",
-                    f"Email: {st.session_state.answers.get('email', '-')}",
+                    f"Телефон: {st.session_state.answers.get('phone') or '-'}",
+                    f"Email: {st.session_state.answers.get('email') or '-'}",
                     f"Військовозобов'язаний: {st.session_state.answers.get('military_liable', '-')}",
                     f"Трудова книжка: {st.session_state.answers.get('labor_book', '-')}",
                     f"Освіта: {st.session_state.answers.get('education', '-')}",

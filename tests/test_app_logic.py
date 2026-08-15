@@ -78,8 +78,10 @@ class TestAppLogic(unittest.TestCase):
             self.assertEqual(norm, "")
 
     def test_validate_email_valid(self):
-        """Test valid email addresses and normalization to lowercase."""
+        """Test valid email addresses, empty/optional email, and normalization to lowercase."""
         cases = [
+            ("", ""),
+            ("   ", ""),
             ("user@example.com", "user@example.com"),
             ("  Name.Surname@Smart-Solutions.UA  ", "name.surname@smart-solutions.ua"),
             ("test+label@domain.co", "test+label@domain.co"),
@@ -92,10 +94,8 @@ class TestAppLogic(unittest.TestCase):
             self.assertEqual(norm, expected_norm)
 
     def test_validate_email_invalid(self):
-        """Test invalid email inputs (empty, spaces inside, missing @, missing domain/TLD, short TLD, leading/trailing hyphen in domain, Cyrillic)."""
+        """Test invalid email inputs (spaces inside, missing @, missing domain/TLD, short TLD, leading/trailing hyphen in domain, Cyrillic)."""
         invalid_inputs = [
-            "",
-            "   ",
             "user name@mail.com",
             "test@",
             "@domain.com",
