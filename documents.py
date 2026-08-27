@@ -6,6 +6,7 @@ DEFAULT_ANSWERS = {
     "pib": "",
     "phone": "",
     "email": "",
+    "target_company": "",
     "military_liable": "Так",
     "labor_book": "Є трудова книжка",
     "education": "Шкільний атестат",

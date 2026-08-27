@@ -3,7 +3,7 @@ tests/test_app_logic.py — Unit tests for app wizard logic, PIB validation, and
 """
 
 import unittest
-from app import validate_pib, validate_phone, validate_email
+from app import validate_pib, validate_phone, validate_email, validate_target_company
 from documents import DEFAULT_ANSWERS
 import emailer
 from validators import validate_reserve_plus_pdf
@@ -113,11 +113,36 @@ class TestAppLogic(unittest.TestCase):
             self.assertGreater(len(err), 0)
             self.assertEqual(norm, "")
 
+    def test_validate_target_company_valid(self):
+        """Test valid target company inputs, empty/optional value, and whitespace normalization."""
+        cases = [
+            ("", ""),
+            ("   ", ""),
+            ("ТОВ «Ромашка»", "ТОВ «Ромашка»"),
+            ("   SoftServe / Project A   ", "SoftServe / Project A"),
+            ("Google   LLC", "Google LLC"),
+            ("Клієнт №1 (Київ)", "Клієнт №1 (Київ)"),
+        ]
+        for input_val, expected_norm in cases:
+            ok, err, norm = validate_target_company(input_val)
+            self.assertTrue(ok, f"Failed for valid company: '{input_val}' ({err})")
+            self.assertEqual(err, "")
+            self.assertEqual(norm, expected_norm)
+
+    def test_validate_target_company_invalid(self):
+        """Test invalid target company inputs exceeding max character limit."""
+        long_company = "A" * 201
+        ok, err, norm = validate_target_company(long_company)
+        self.assertFalse(ok)
+        self.assertGreater(len(err), 0)
+        self.assertEqual(norm, "")
+
     def test_default_answers(self):
         """Test default answers dictionary values."""
         self.assertEqual(DEFAULT_ANSWERS["pib"], "")
         self.assertEqual(DEFAULT_ANSWERS["phone"], "")
         self.assertEqual(DEFAULT_ANSWERS["email"], "")
+        self.assertEqual(DEFAULT_ANSWERS["target_company"], "")
         self.assertEqual(DEFAULT_ANSWERS["student_day_form"], "Ні")
         self.assertEqual(DEFAULT_ANSWERS["military_liable"], "Так")
         self.assertEqual(DEFAULT_ANSWERS["labor_book"], "Є трудова книжка")

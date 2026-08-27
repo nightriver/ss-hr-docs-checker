@@ -110,6 +110,24 @@ def validate_email(email_text: str) -> tuple[bool, str, str]:
     return True, "", cleaned
 
 
+def validate_target_company(company_text: str) -> tuple[bool, str, str]:
+    """
+    Validates and normalizes target client company name.
+    Company is optional: empty input returns (True, "", "").
+    Normalizes multiple spaces, strips leading/trailing whitespace.
+    Enforces max length limit of 200 characters.
+    """
+    if not company_text:
+        return True, "", ""
+    cleaned = re.sub(r"\s+", " ", company_text).strip()
+    if not cleaned:
+        return True, "", ""
+    if len(cleaned) > 200:
+        return False, "Назва компанії не повинна перевищувати 200 символів.", ""
+    return True, "", cleaned
+
+
+
 if "step" not in st.session_state:
     st.session_state.step = 1
 if "answers" not in st.session_state:
@@ -169,12 +187,18 @@ if step <= TOTAL_STEPS:
 # ── Крок 1 ──
 if step == 1:
     st.subheader("Введіть ваші контактні дані")
-    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), контактний номер телефону та email (за наявності). Вони необхідні для зв'язку HR-фахівця з вами.")
+    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), назву компанії-клієнта (за наявності), контактний номер телефону та email. Вони необхідні для зв'язку HR-фахівця з вами.")
     pib_val = st.text_input(
         "ПІБ кандидата:",
         value=st.session_state.answers.get("pib", ""),
         placeholder="Іваненко Петро Олексійович",
         key="input_pib",
+    )
+    company_val = st.text_input(
+        "Компанія, до якої ви працевлаштовуєтесь (необов'язково):",
+        value=st.session_state.answers.get("target_company", ""),
+        placeholder="Наприклад, назва компанії-клієнта або проєкту",
+        key="input_target_company",
     )
     phone_val = st.text_input(
         "Номер телефону:",
@@ -331,9 +355,10 @@ elif step > TOTAL_STEPS:
 
     st.success("✅ Ваш персональний перелік документів сформовано!")
     pib_disp = st.session_state.answers.get("pib") or "Не вказано"
+    comp_disp = st.session_state.answers.get("target_company") or "Не вказано"
     phone_disp = st.session_state.answers.get("phone") or "Не вказано"
     email_disp = st.session_state.answers.get("email") or "Не вказано"
-    st.caption(f"Кандидат: **{pib_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
+    st.caption(f"Кандидат: **{pib_disp}** | Компанія: **{comp_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
 
     docs = build_documents(st.session_state.answers)
 
@@ -453,13 +478,16 @@ elif step > TOTAL_STEPS:
             total_parts = len(chunk_res.parts)
 
             for part in chunk_res.parts:
+                target_comp = st.session_state.answers.get("target_company", "").strip()
+                comp_tag = f" [{target_comp}]" if target_comp else ""
                 if total_parts > 1:
-                    subject = f"[Частина {part.part_number}/{total_parts}] Документи для працевлаштування — {pib_str}"
+                    subject = f"[Частина {part.part_number}/{total_parts}] Документи для працевлаштування{comp_tag} — {pib_str}"
                 else:
-                    subject = f"Документи для працевлаштування — {pib_str}"
+                    subject = f"Документи для працевлаштування{comp_tag} — {pib_str}"
 
                 body_lines = [
                     f"Кандидат: {pib_str}",
+                    f"Компанія-роботодавець: {st.session_state.answers.get('target_company') or 'Не вказано'}",
                     f"Телефон: {st.session_state.answers.get('phone') or '-'}",
                     f"Email: {st.session_state.answers.get('email') or '-'}",
                     f"Військовозобов'язаний: {st.session_state.answers.get('military_liable', '-')}",
@@ -564,7 +592,8 @@ with col2:
                 ok_pib, err_pib = validate_pib(st.session_state.get("input_pib", ""))
                 ok_phone, err_phone, phone_norm = validate_phone(st.session_state.get("input_phone", ""))
                 ok_email, err_email, email_norm = validate_email(st.session_state.get("input_email", ""))
-                errors = [e for ok, e in ((ok_pib, err_pib), (ok_phone, err_phone), (ok_email, err_email)) if not ok]
+                ok_comp, err_comp, comp_norm = validate_target_company(st.session_state.get("input_target_company", ""))
+                errors = [e for ok, e in ((ok_pib, err_pib), (ok_phone, err_phone), (ok_email, err_email), (ok_comp, err_comp)) if not ok]
                 if errors:
                     for e in errors:
                         st.error(e)
@@ -572,6 +601,7 @@ with col2:
                     st.session_state.answers["pib"] = st.session_state.get("input_pib", "").strip()
                     st.session_state.answers["phone"] = phone_norm
                     st.session_state.answers["email"] = email_norm
+                    st.session_state.answers["target_company"] = comp_norm
                     st.session_state.step += 1
                     st.rerun()
             else:

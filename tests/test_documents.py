@@ -32,6 +32,8 @@ class TestDocumentsSchema(unittest.TestCase):
         self.assertEqual(DEFAULT_ANSWERS["phone"], "")
         self.assertIn("email", DEFAULT_ANSWERS)
         self.assertEqual(DEFAULT_ANSWERS["email"], "")
+        self.assertIn("target_company", DEFAULT_ANSWERS)
+        self.assertEqual(DEFAULT_ANSWERS["target_company"], "")
         self.assertIn("student_day_form", DEFAULT_ANSWERS)
         self.assertEqual(DEFAULT_ANSWERS["student_day_form"], "Ні")
         self.assertIn("military_liable", DEFAULT_ANSWERS)
