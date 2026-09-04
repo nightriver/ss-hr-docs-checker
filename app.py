@@ -187,7 +187,7 @@ if step <= TOTAL_STEPS:
 # ── Крок 1 ──
 if step == 1:
     st.subheader("Введіть ваші контактні дані")
-    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), назву компанії-клієнта (за наявності), контактний номер телефону та email. Вони необхідні для зв'язку HR-фахівця з вами.")
+    st.caption("Вкажіть ваші ПІБ кирилицею (як у паспорті), назву компанії Замовника (за наявності), контактний номер телефону та email. Вони необхідні для зв'язку HR-фахівця з вами.")
     pib_val = st.text_input(
         "ПІБ кандидата:",
         value=st.session_state.answers.get("pib", ""),
@@ -195,9 +195,9 @@ if step == 1:
         key="input_pib",
     )
     company_val = st.text_input(
-        "Компанія, до якої ви працевлаштовуєтесь (необов'язково):",
+        "Повна назва компанії Замовника:",
         value=st.session_state.answers.get("target_company", ""),
-        placeholder="Наприклад, назва компанії-клієнта або проєкту",
+        placeholder="Назва компанії Замовника",
         key="input_target_company",
     )
     phone_val = st.text_input(
@@ -358,7 +358,7 @@ elif step > TOTAL_STEPS:
     comp_disp = st.session_state.answers.get("target_company") or "Не вказано"
     phone_disp = st.session_state.answers.get("phone") or "Не вказано"
     email_disp = st.session_state.answers.get("email") or "Не вказано"
-    st.caption(f"Кандидат: **{pib_disp}** | Компанія: **{comp_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
+    st.caption(f"Кандидат: **{pib_disp}** | Компанія Замовника: **{comp_disp}** | Телефон: **{phone_disp}** | Email: **{email_disp}**")
 
     docs = build_documents(st.session_state.answers)
 
@@ -487,7 +487,7 @@ elif step > TOTAL_STEPS:
 
                 body_lines = [
                     f"Кандидат: {pib_str}",
-                    f"Компанія-роботодавець: {st.session_state.answers.get('target_company') or 'Не вказано'}",
+                    f"Компанія Замовника: {st.session_state.answers.get('target_company') or 'Не вказано'}",
                     f"Телефон: {st.session_state.answers.get('phone') or '-'}",
                     f"Email: {st.session_state.answers.get('email') or '-'}",
                     f"Військовозобов'язаний: {st.session_state.answers.get('military_liable', '-')}",
