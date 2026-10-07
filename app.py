@@ -478,12 +478,12 @@ elif step > TOTAL_STEPS:
             total_parts = len(chunk_res.parts)
 
             for part in chunk_res.parts:
-                target_comp = st.session_state.answers.get("target_company", "").strip()
-                comp_tag = f" [{target_comp}]" if target_comp else ""
-                if total_parts > 1:
-                    subject = f"[Частина {part.part_number}/{total_parts}] Документи для працевлаштування{comp_tag} — {pib_str}"
-                else:
-                    subject = f"Документи для працевлаштування{comp_tag} — {pib_str}"
+                subject = file_naming.build_email_subject(
+                    pib=pib_str,
+                    company=st.session_state.answers.get("target_company", ""),
+                    part_number=part.part_number,
+                    total_parts=total_parts,
+                )
 
                 body_lines = [
                     f"Кандидат: {pib_str}",

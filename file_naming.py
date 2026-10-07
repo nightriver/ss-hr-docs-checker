@@ -1,6 +1,7 @@
 """
-file_naming.py — Standardized attachment filename generation for HR Docs Checker v2.2
-Format: {Prizvyshche_Imya}_{file_label}[_p{N}].{ext}
+file_naming.py — Standardized attachment filename and email subject generation for HR Docs Checker v2.2
+Attachment format: {Prizvyshche_Imya}_{file_label}[_p{N}].{ext}
+Subject format: [{Short company}] - {ПІБ}[ (частина N з M)]
 """
 
 import os
@@ -103,3 +104,99 @@ def generate_attachment_filename(
         ext = "jpg"
 
     return f"{candidate_name}_{clean_label}{suffix}.{ext}"
+
+
+# Legal entity forms stripped from the company name in email subjects.
+# Sorted longest-first so "Приватне акціонерне товариство" wins over "Акціонерне товариство".
+LEGAL_FORMS: list[str] = sorted(
+    [
+        "Товариство з обмеженою відповідальністю",
+        "Товариство з додатковою відповідальністю",
+        "Приватне акціонерне товариство",
+        "Публічне акціонерне товариство",
+        "Акціонерне товариство",
+        "Приватне підприємство",
+        "Державне підприємство",
+        "Комунальне підприємство",
+        "Дочірнє підприємство",
+        "Фізична особа-підприємець",
+        "Общество с ограниченной ответственностью",
+        "ТОВ", "ТДВ", "ПрАТ", "ПАТ", "АТ", "ПП", "ФОП", "ДП", "КП",
+        "ООО", "LLC", "Ltd",
+    ],
+    key=len,
+    reverse=True,
+)
+
+# Spaces and hyphens inside a legal form match flexibly ("особа-підприємець" / "особа - підприємець")
+_LEGAL_FORMS_ALT = "|".join(
+    r"[\s\-]+".join(re.escape(tok) for tok in re.split(r"[\s\-]+", form))
+    for form in LEGAL_FORMS
+)
+_LEGAL_FORM_PREFIX_RE = re.compile(rf"^(?:{_LEGAL_FORMS_ALT})(?!\w)", re.IGNORECASE)
+_LEGAL_FORM_SUFFIX_RE = re.compile(rf"(?<!\w)(?:{_LEGAL_FORMS_ALT})\.?$", re.IGNORECASE)
+
+_QUOTES_RE = re.compile(r"[«»\"“”„]")
+# Apostrophes used as quotes (at word edges); apostrophes inside words like "Слов'янська" are kept
+_EDGE_APOSTROPHE_RE = re.compile(r"(?<!\w)['’ʼ`‘]|['’ʼ`‘](?!\w)")
+# Characters forbidden in Windows filenames (mail clients derive saved-file names from the subject)
+_FORBIDDEN_RE = re.compile(r"[\\/:*?<>|]")
+
+COMPANY_SUBJECT_MAX_LEN = 50
+_EDGE_PUNCT = " ,.-"
+
+
+def short_company_name(company: str) -> str:
+    """
+    Shortens a client company name for the email subject:
+    strips quotes, legal entity form (at start or end) and filename-unsafe characters,
+    caps length at a word boundary.
+
+    Examples:
+    - 'Товариство з обмеженою відповідальністю «Флагман Трейдинг»' -> 'Флагман Трейдинг'
+    - 'Флагман Трейдинг, ТОВ' -> 'Флагман Трейдинг'
+    - 'ТОВ' -> ''
+    - '' -> ''
+    """
+    if not company:
+        return ""
+
+    name = _QUOTES_RE.sub(" ", company)
+    name = _EDGE_APOSTROPHE_RE.sub(" ", name)
+    name = _FORBIDDEN_RE.sub(" ", name)
+    name = re.sub(r"\s+", " ", name).strip(_EDGE_PUNCT)
+
+    name = _LEGAL_FORM_PREFIX_RE.sub("", name).strip(_EDGE_PUNCT)
+    name = _LEGAL_FORM_SUFFIX_RE.sub("", name).strip(_EDGE_PUNCT)
+
+    if len(name) > COMPANY_SUBJECT_MAX_LEN:
+        cut = name[:COMPANY_SUBJECT_MAX_LEN]
+        if name[COMPANY_SUBJECT_MAX_LEN] != " " and " " in cut:
+            cut = cut.rsplit(" ", 1)[0]
+        name = cut.strip(_EDGE_PUNCT)
+
+    return name
+
+
+def build_email_subject(
+    pib: str,
+    company: str = "",
+    part_number: int = 1,
+    total_parts: int = 1,
+) -> str:
+    """
+    Builds a short HR email subject: '[{Short company}] - {ПІБ}[ (частина N з M)]'.
+    Company is optional (subject is then just ПІБ); empty ПІБ falls back to 'Кандидат'.
+
+    Examples:
+    - ('Затишний Євгеній Михайлович', 'ТОВ «Флагман Трейдинг»')
+        -> '[Флагман Трейдинг] - Затишний Євгеній Михайлович'
+    - ('Затишний Євгеній Михайлович', '') -> 'Затишний Євгеній Михайлович'
+    - (..., part_number=1, total_parts=2) -> '... (частина 1 з 2)'
+    """
+    pib_clean = re.sub(r"\s+", " ", pib or "").strip() or "Кандидат"
+    company_short = short_company_name(company)
+    subject = f"[{company_short}] - {pib_clean}" if company_short else pib_clean
+    if total_parts > 1:
+        subject += f" (частина {part_number} з {total_parts})"
+    return subject
